@@ -14,7 +14,7 @@ else
 end
 
 local status, sshFreeBSD = pcall(require, 'utils.ssh-freebsd')
-if status then                                                                  
+if status then
     table.insert(actors, sshFreeBSD)
 else
     print "unable to load freeBSD ssh module"
@@ -178,7 +178,7 @@ function binarySearch:next(curr, top, threshold)
             self.lowerLimit = curr
         end
     else
-        if curr == lowerLimit then            
+        if curr == lowerLimit then
             return curr, true
         else
             self.upperLimit = curr
@@ -226,7 +226,20 @@ ffi.copy(macAddr, pkt.eth.dst.uint8, 6)
 macAddr[0] = (macAddr[0] + 1) % macWraparound
 --]]
 
-function mod.parseArguments(args)
+function mysplit(inputstr, sep)
+        if sep == nil then
+                sep = "%s"
+        end
+        local t={} ; i=1
+        for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+                t[i] = str
+                i = i + 1
+        end
+        return t
+end
+
+function mod.parseArguments(...)
+    local args = mysplit(..., "\t")
     local results = {}
     for i=1, #args, 2 do
         local key = args[i]:gsub("-", "", 2) -- cut off one or two leading minus
@@ -238,5 +251,3 @@ end
 
 
 return mod
-
-
