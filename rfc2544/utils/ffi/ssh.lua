@@ -62,7 +62,7 @@ local c = {
     SSH_AUTH_INFO = 3,
     SSH_AUTH_AGAIN = 4,
     SSH_AUTH_ERROR = -1,
-    
+
     -- enum ssh_server_known_e
     SSH_SERVER_ERROR = -1,
     SSH_SERVER_NOT_KNOWN = 0,
@@ -219,7 +219,7 @@ local function request_exec(session, cmd, callback)
         libssh.ssh_channel_free(channel);
         return nil, "Unable to open channel session"
     end
-    
+
     -- TODO: retreive exit code
     local rc = libssh.ssh_channel_request_exec(channel, cmd)
     if rc ~= 0 then
@@ -241,7 +241,7 @@ local function request_exec(session, cmd, callback)
         end
         nbytes = libssh.ssh_channel_read(channel, buffer, 1024, 0);
     end
-    
+
     if nbytes < 0 then
         libssh.ssh_channel_close(channel);
         libssh.ssh_channel_free(channel);

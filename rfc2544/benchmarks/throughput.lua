@@ -38,7 +38,7 @@ function benchmark:init(arg)
     self.txQueues = arg.txQueues
 
     self.numIterations = arg.numIterations or 1
-    
+
     self.skipConf = arg.skipConf
     self.dut = arg.dut
 
@@ -86,11 +86,11 @@ end
 
 function benchmark:toTikz(filename, ...)
     local values = {}
-    
+
     local numResults = select("#", ...)
     for i=1, numResults do
         local result = select(i, ...)
-        
+
         local avg = 0
         local numVals = 0
         local frameSize
@@ -100,29 +100,29 @@ function benchmark:toTikz(filename, ...)
             numVals = numVals + 1
         end
         avg = avg / numVals
-        
+
         table.insert(values, {k = frameSize, v = avg})
     end
     table.sort(values, function(e1, e2) return e1.k < e2.k end)
-    
-    
+
+
     local xtick = ""
     local t64 = false
     local last = -math.huge
     for k, p in ipairs(values) do
         if (p.k - last) >= 128 then
-            xtick = xtick .. p.k            
+            xtick = xtick .. p.k
             if values[k + 1] then
                 xtick = xtick .. ","
             end
             last = p.k
         end
     end
-    
-    
+
+
     local imgMpps = tikz.new(filename .. "_mpps" .. ".tikz", [[ xlabel={packet size [byte]}, ylabel={rate [Mpps]}, grid=both, ymin=0, xmin=0, xtick={]] .. xtick .. [[},scaled ticks=false, width=9cm, height=4cm, cycle list name=exotic]])
     local imgMbps = tikz.new(filename .. "_mbps" .. ".tikz", [[ xlabel={packet size [byte]}, ylabel={rate [Gbit/s]}, grid=both, ymin=0, xmin=0, xtick={]] .. xtick .. [[},scaled ticks=false, width=9cm, height=4cm, cycle list name=exotic,legend style={at={(0.99,0.02)},anchor=south east}]])
-    
+
     imgMpps:startPlot()
     imgMbps:startPlot()
     for _, p in ipairs(values) do
@@ -132,7 +132,7 @@ function benchmark:toTikz(filename, ...)
     local legend = "throughput at max " .. self.maxLossRate * 100 .. " \\% packet loss"
     imgMpps:endPlot(legend)
     imgMbps:endPlot(legend)
-    
+
     imgMpps:startPlot()
     imgMbps:startPlot()
     for _, p in ipairs(values) do
@@ -159,7 +159,7 @@ function benchmark:bench(frameSize)
     local pktLost = true
     local maxLinkRate = self.txQueues[1].dev:getLinkStatus().speed
     local rate, lastRate
-    local bar = barrier.new(2)
+    local bar = barrier.new("uint64_t[?]", 2)
     local results = {}
     local rateSum = 0
     local finished = false
@@ -176,7 +176,7 @@ function benchmark:bench(frameSize)
         results[iteration] = {spkts = 0, rpkts = 0, mpps = 0, frameSize = frameSize}
         -- loop until no packetloss
         while dpdk.running() do
-            
+
             -- workaround for rate bug
             local numQueues = rate > (64 * 64) / (84 * 84) * maxLinkRate and rate < maxLinkRate and 3 or 1
             bar:reinit(numQueues + 1)
@@ -192,16 +192,16 @@ function benchmark:bench(frameSize)
                 -- maxLinkRate
                 self.txQueues[1]:setRate(rate)
             end
-            
+
             local loadTasks = {}
             -- traffic generator
             for i=1, numQueues do
                 table.insert(loadTasks, dpdk.launchLua("throughputLoadSlave", self.txQueues[i], port, frameSize, self.duration, mod, bar))
             end
-            
+
             -- count the incoming packets
             local ctrTask = dpdk.launchLua("throughputCounterSlave", self.rxQueues[1], port, frameSize, self.duration, bar)
-            
+
             -- wait until all slaves are finished
             local spkts = 0
             for _, loadTask in pairs(loadTasks) do
@@ -216,10 +216,10 @@ function benchmark:bench(frameSize)
                 -- doesnt matter
                 results[iteration] = { spkts = spkts, rpkts = rpkts, mpps = spkts / 10^6 / self.duration, frameSize = frameSize}
             end
-            
+
             printf("sent %d packets, received %d", spkts, rpkts)
             printf("rate %f and packetloss %f => %d", rate, lossRate, validRun and 1 or 0)
-            
+
             lastRate = rate
             rate, finished = binSearch:next(rate, validRun, self.rateThreshold)
             if finished then
@@ -285,11 +285,11 @@ function throughputLoadSlave(queue, port, frameSize, duration, modifier, bar)
     --local modifierFoo = utils.getPktModifierFunction(modifier, baseIp, wrapIp, baseEth, wrapEth)
 
     -- TODO: RFC2544 routing updates if router
-    -- send learning frames: 
+    -- send learning frames:
     --      ARP for IP
 
 
-    local sendBufs = function(bufs, port) 
+    local sendBufs = function(bufs, port)
         -- allocate buffers from the mem pool and store them in self array
         bufs:alloc(frameSize - 4)
 
@@ -310,7 +310,7 @@ function throughputLoadSlave(queue, port, frameSize, duration, modifier, bar)
         sendBufs(bufs, port - 1)
     end
 
-    -- benchmark phase    
+    -- benchmark phase
     timer:reset(duration)
     local totalSent = 0
     while timer:running() do
@@ -346,7 +346,7 @@ if standalone then
         if not txPort or not rxPort then
             return print("usage: --txport <txport> --rxport <rxport> --duration <duration> --numiterations <numiterations>")
         end
-        
+
         local rxDev, txDev
         if txPort == rxPort then
             -- sending and receiving from the same port
@@ -358,9 +358,9 @@ if standalone then
             rxDev = device.config({port = rxPort, rxQueues = 2, txQueues = 3})
         end
         device.waitForLinks()
-        if txPort == rxPort then 
+        if txPort == rxPort then
             dpdk.launchLua(arp.arpTask, {
-                { 
+                {
                     txQueue = txDev:getTxQueue(0),
                     rxQueue = txDev:getRxQueue(1),
                     ips = {"198.18.1.2", "198.19.1.2"}
@@ -380,18 +380,18 @@ if standalone then
                 }
             })
         end
-        
+
         local bench = benchmark()
         bench:init({
-            txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3)}, 
-            rxQueues = {rxDev:getRxQueue(0)}, 
+            txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3)},
+            rxQueues = {rxDev:getRxQueue(0)},
             duration = args.duration,
             numIterations = args.numiterations,
             skipConf = true,
         })
-        
+
         print(bench:getCSVHeader())
-        local results = {}        
+        local results = {}
         local FRAME_SIZES   = {64, 128, 256, 512, 1024, 1280, 1518}
         for _, frameSize in ipairs(FRAME_SIZES) do
             local result = bench:bench(frameSize)

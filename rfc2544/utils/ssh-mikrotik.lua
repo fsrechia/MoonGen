@@ -47,7 +47,7 @@ function mod.delIPRoute()
         return mod.exec("/ip route remove [/ip route find dst-address=" .. dst .. "/" .. pfx .. " gateway=" .. interface .. "]")
     else
         return -1
-    end   
+    end
 end
 
 function mod.getIPRouteCount()
@@ -81,13 +81,13 @@ function mod.getSession()
         ssh.set_option(session, "port", conf.getSSHPort())
         -- do not ask for checking host signature
         ssh.set_option(session, "strict_hostkey", false)
-        
+
         ssh.connect(session)
         local ok = ssh.auth_autopubkey(session)
         if not ok then
-            ok = ssh.auth_password(session, conf.getSSHPass()) 
+            ok = ssh.auth_password(session, conf.getSSHPass())
         end
-        
+
         if not ok then
             return nil, -1
         end

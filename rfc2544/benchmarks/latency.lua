@@ -36,7 +36,7 @@ function benchmark:init(arg)
 
     self.rxQueues = arg.rxQueues
     self.txQueues = arg.txQueues
-    
+
     self.skipConf = arg.skipConf
     self.dut = arg.dut
 
@@ -81,21 +81,21 @@ end
 
 function benchmark:toTikz(filename, ...)
     local cdf = tikz.new(filename .. "_cdf" .. ".tikz", [[xlabel={latency [$\mu$s]}, ylabel={CDF}, grid=both, ymin=0, ymax=1, mark repeat=100, scaled ticks=false, no markers, width=9cm, height=4cm,cycle list name=exotic]])
-    
+
     local numResults = select("#", ...)
     for i=1, numResults do
         local result = select(i, ...)
         local histo = tikz.new(filename .. "_histo" .. "_" .. result.frameSize .. ".tikz", [[xlabel={latency [$\mu$s]}, ylabel={probability [\%]}, grid=both, ybar interval, ymin=0, xtick={}, scaled ticks=false, tick label style={/pgf/number format/fixed}, x tick label as interval=false, width=9cm, height=4cm ]])
         histo:startPlot([[orange, fill=orange]])
         cdf:startPlot()
-        
+
         result:calc()
         local numSamples = result.numSamples
         local q1,q2,q3 = result:quartiles()
-        local min, max = result.sortedHisto[1].k, result.sortedHisto[#result.sortedHisto].k        
+        local min, max = result.sortedHisto[1].k, result.sortedHisto[#result.sortedHisto].k
         local binWidth =  (q3 - q1) / (numSamples ^ (1/2))
         local numBins = math.ceil((max - min) / binWidth) + 1
-    
+
         local bins = {}
         for j=1, numBins do
             bins[j] = 0
@@ -104,15 +104,15 @@ function benchmark:toTikz(filename, ...)
             local j = math.floor((k - min) / binWidth) + 1
             bins[j] = bins[j] + v
         end
-        
+
         local sum = 0
         for k, v in ipairs(bins) do
             local x = (k-1) * binWidth + min
             histo:addPoint(x / 1000, v / numSamples * 100)
             sum = sum + v
             cdf:addPoint(x / 1000, sum / numSamples)
-        end            
-        
+        end
+
         histo:finalize()
         cdf:endPlot(result.frameSize .. "byte")
     end
@@ -131,9 +131,9 @@ function benchmark:bench(frameSize, rate)
     end
 
     local maxLinkRate = self.txQueues[1].dev:getLinkStatus().speed
-    local bar = barrier.new(0)
+    local bar = barrier.new("uint64_t[?]",0)
     local port = UDP_PORT
-    
+
     -- workaround for rate bug
     local numQueues = rate > (64 * 64) / (84 * 84) * maxLinkRate and rate < maxLinkRate and 3 or 1
     bar:reinit(numQueues + 1)
@@ -149,16 +149,16 @@ function benchmark:bench(frameSize, rate)
         -- maxLinkRate
         self.txQueues[1]:setRate(rate)
     end
-    
+
     -- traffic generator
     local loadSlaves = {}
     for i=1, numQueues do
         table.insert(loadSlaves, dpdk.launchLua("latencyLoadSlave", self.txQueues[i], port, frameSize, self.duration, mod, bar))
     end
-    
+
     local hist = latencyTimerSlave(self.txQueues[numQueues+1], self.rxQueues[1], port, frameSize, self.duration, bar)
     hist:print()
-    
+
     local spkts = 0
     for _, sl in pairs(loadSlaves) do
         spkts = spkts + sl:wait()
@@ -201,10 +201,10 @@ function latencyLoadSlave(queue, port, frameSize, duration, modifier, bar)
     --local modifierFoo = utils.getPktModifierFunction(modifier, baseIp, wrapIp, baseEth, wrapEth)
 
     -- TODO: RFC2544 routing updates if router
-    -- send learning frames: 
+    -- send learning frames:
     --      ARP for IP
 
-    local sendBufs = function(bufs, port) 
+    local sendBufs = function(bufs, port)
         -- allocate buffers from the mem pool and store them in self array
         bufs:alloc(frameSize - 4)
 
@@ -241,20 +241,20 @@ end
 function latencyTimerSlave(txQueue, rxQueue, port, frameSize, duration, bar)
     --Timestamped packets must be > 80 bytes (+4crc)
     frameSize = frameSize > 84 and frameSize or 84
-    
+
     local ethDst = arp.blockingLookup("198.18.1.1", 10)
     --TODO: error on timeout
-        
+
     rxQueue.dev:filterTimestamps(rxQueue)
     local timestamper = ts:newUdpTimestamper(txQueue, rxQueue)
     local hist = hist:new()
     local rateLimit = timer:new(0.001)
 
-    -- sync with load slave and wait additional few milliseconds to ensure 
+    -- sync with load slave and wait additional few milliseconds to ensure
     -- the traffic generator has started
     bar:wait()
     dpdk.sleepMillis(1000)
-    
+
     local t = timer:new(duration)
     while t:running() do
         hist:update(timestamper:measureLatency(frameSize - 4, function(buf)
@@ -284,7 +284,7 @@ if standalone then
         if not txPort or not rxPort then
             return print("usage: --txport <txport> --rxport <rxport> --duration <duration> --rate <rate>")
         end
-        
+
         local rxDev, txDev
         if txPort == rxPort then
             -- sending and receiving from the same port
@@ -296,9 +296,9 @@ if standalone then
             rxDev = device.config({port = rxPort, rxQueues = 3, txQueues = 1})
         end
         device.waitForLinks()
-        if txPort == rxPort then 
+        if txPort == rxPort then
             dpdk.launchLua(arp.arpTask, {
-                { 
+                {
                     txQueue = txDev:getTxQueue(0),
                     rxQueue = txDev:getRxQueue(1),
                     ips = {"198.18.1.2", "198.19.1.2", "198.18.1.1"}
@@ -318,17 +318,17 @@ if standalone then
                 }
             })
         end
-        
+
         local bench = benchmark()
         bench:init({
-            txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3), txDev:getTxQueue(4)}, 
-            rxQueues = {rxDev:getRxQueue(2)}, 
+            txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3), txDev:getTxQueue(4)},
+            rxQueues = {rxDev:getRxQueue(2)},
             duration = args.duration,
             skipConf = true,
         })
-        
+
         print(bench:getCSVHeader())
-        local results = {}        
+        local results = {}
         local FRAME_SIZES   = {64, 128, 256, 512, 1024, 1280, 1518}
         for _, frameSize in ipairs(FRAME_SIZES) do
             local result = bench:bench(frameSize, args.rate or 5000)

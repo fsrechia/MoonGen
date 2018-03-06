@@ -12,7 +12,7 @@ function confirm()
     until answer == "y" or answer == "n"
     return answer == "y" and 0 or -1
 end
-    
+
 
 function mod.addInterfaceIP(interface, ip, pfx)
     io.write(string.format("configure: add to interface %s ip %s/%d", interface, ip, pfx))
@@ -67,7 +67,7 @@ function mod.getDeviceName()
     return ns.deviceName
 end
 
-function mod.getDeviceOS()    
+function mod.getDeviceOS()
     if type(ns.deviceOS) ~= string then
         io.write("configure: get device OS: ")
         ns.deviceOS = io.read()

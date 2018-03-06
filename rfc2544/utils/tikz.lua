@@ -27,7 +27,7 @@ function tikz.new(filename, options)
     local self = setmetatable({}, tikz)
     self.file = io.open(filename, "w")
     self.plot = false
-    
+
     self.file:write(strStart)
     if options then
 --        self.file:write("[")

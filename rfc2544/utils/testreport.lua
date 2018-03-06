@@ -62,16 +62,16 @@ Rate: & ##RATE## \\
 \end{tabu}
 ]]
 
-function mod.new(filename)    
+function mod.new(filename)
     local self = setmetatable({}, mod)
-    
+
     self.filename = filename
-    
+
     self.throughput = {}
     self.latency = {}
     self.frameloss = {}
     self.btb = {}
-    
+
     return self
 end
 
@@ -89,7 +89,7 @@ end
 
 function mod:addFrameloss(result, duration)
     self.frameloss.duration = duration
-    table.insert(self.frameloss, {k = result[1].size, v = result})    
+    table.insert(self.frameloss, {k = result[1].size, v = result})
 end
 
 function mod:addBackToBack(result, duration, accuracy, rate)
@@ -124,7 +124,7 @@ function mod:writeThroughput(file)
             -- multirow for 1 column does not work well
             file:write(string.format("\\multirow{%d}{*}{%d}", #p.v, p.k))
         end
-        
+
         for i, r in ipairs(p.v) do
             if not multirow then
                 file:write(r.frameSize)
@@ -133,7 +133,7 @@ function mod:writeThroughput(file)
         end
     end
     file:write("\\hline\n\\end{longtabu}\n")
-    local img = imgTex:gsub("##IMG##", "plot_throughput_mpps") 
+    local img = imgTex:gsub("##IMG##", "plot_throughput_mpps")
     file:write(img)
     file:write("\\newpage\n")
 end
@@ -171,11 +171,11 @@ function mod:writeFrameloss(file)
         file:write("\\hline\n")
     end
     file:write("\\end{longtabu}")
-    local img = imgTex:gsub("##IMG##", "plot_frameloss_percent") 
+    local img = imgTex:gsub("##IMG##", "plot_frameloss_percent")
     file:write(img)
 end
 
-function mod:writeBackToBack(file)    
+function mod:writeBackToBack(file)
     local tex = btbInfoTex
     tex = tex:gsub("##DURATION##", string.format("%d s", self.btb.duration))
     tex = tex:gsub("##ACCURACY##", string.format("%d packets", self.btb.accuracy))
@@ -195,30 +195,30 @@ function mod:writeBackToBack(file)
         file:write(string.format("%d & %d & %.1f & %d & %d\\\\\n", p.k, min, avg, max, math.ceil(self.btb.rate / (p.k + 20) / 8 * self.btb.duration * 10^6)))
     end
     file:write("\\hline\n\\end{longtabu}\n")
-    local img = imgTex:gsub("##IMG##", "plot_backtoback") 
+    local img = imgTex:gsub("##IMG##", "plot_backtoback")
     file:write(img)
 end
 
 function mod:finalize()
     local texFile = io.open(self.filename, "w")
     texFile:write(texHdr)
-    
-    self:writeGeneralInfo(texFile)    
-    
+
+    self:writeGeneralInfo(texFile)
+
     if #self.throughput > 0 then
         self:writeThroughput(texFile)
     end
-    
+
     if #self.latency > 0 then
-        self:writeLatency(texFile)        
+        self:writeLatency(texFile)
     end
-    
+
     if #self.frameloss > 0 then
-        self:writeFrameloss(texFile)        
+        self:writeFrameloss(texFile)
     end
-    
+
     if #self.btb > 0 then
-        self:writeBackToBack(texFile)        
+        self:writeBackToBack(texFile)
     end
     texFile:write("\\end{document}")
     texFile:close()

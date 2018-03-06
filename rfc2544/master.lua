@@ -69,8 +69,10 @@ function master(...)
     local parser = argparse("rfc2544","RFC2544 test manager.")
     parser:option("--txport", "<txport>")
       :args(1)
+      :convert(tonumber)
     parser:option("--rxport", "<rxport>")
       :args(1)
+      :convert(tonumber)
 
     parser:option("--rths", "<throughput rate threshold>")
     parser:option("--mlr", "<max throuput loss rate>")
@@ -103,8 +105,8 @@ function master(...)
     local btbThreshold = arguments.bths or 100
     local duration = arguments.duration or 10
     local maxLossRate = arguments.mlr or 0.001
-    local dskip = arguments.dskip
-    local numIterations = arguments.iterations
+    local dskip = arguments.dskip or true
+    local numIterations = arguments.iterations or 1
 
     if type(arguments.sshpass) == "string" then
         conf.setSSHPass(arguments.sshpass)
@@ -133,8 +135,8 @@ function master(...)
     end
 
     local dut = {
-        ifIn = arguments.din,
-        ifOut = arguments.dout
+        ifIn = arguments.din or "dummy1",
+        ifOut = arguments.dout or "dummy2"
     }
 
     local rxDev, txDev

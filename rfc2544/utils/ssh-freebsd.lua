@@ -14,7 +14,7 @@ end
 function mod.delInterfaceIP(interface, ip, pfx)
     return mod.exec("ifconfig " .. interface .. " inet " .. ip .. " -alias")
 end
--- The Firewall is not supported yet. Kernel must be recompiled first and the mod.addIPFilter and mod.delIPFilter 
+-- The Firewall is not supported yet. Kernel must be recompiled first and the mod.addIPFilter and mod.delIPFilter
 -- cannot be translated in that extent
 function mod.clearIPFilters()
     return mod.exec("ipf -Fa")
@@ -53,7 +53,7 @@ function mod.delIPRoute()
         return mod.exec("route del " .. dst .. "/" .. pfx .. gateway)
     else
         return -1
-    end   
+    end
 end
 --I dont know if this works, since netstat displays comments
 function mod.getIPRouteCount()
@@ -96,18 +96,18 @@ function mod.getSession()
         ssh.set_option(session, "port", conf.getSSHPort())
         -- do not ask for checking host signature
         ssh.set_option(session, "strict_hostkey", false)
-        
-        
+
+
         ssh.connect(session)
         local ok = ssh.auth_autopubkey(session)
         if not ok then
-            ok = ssh.auth_password(session, conf.getSSHPass()) 
+            ok = ssh.auth_password(session, conf.getSSHPass())
         end
-        
+
         if not ok then
             return nil, -1
         end
-        
+
         -- could get banner to guess system
         -- (Mikrotik)
         -- ssh.get_issue_banner(session)
