@@ -20,7 +20,8 @@ local conf          = require "config"
 
 local argparse      = require "utils.argparse"
 
-local FRAME_SIZES   = {64, 128, 256, 512, 1024, 1280, 1518}
+-- local FRAME_SIZES   = {64, 128, 256, 512, 1024, 1280, 1518}
+local FRAME_SIZES   = {128, 1280, 1518}
 
 local usageString = [[
 
@@ -209,30 +210,31 @@ function master(...)
     thBench:toTikz(folderName .. "/plot_throughput", unpack(results))
     file:close()
 
-    results = {}
-    local latBench = latency.benchmark()
-    latBench:init({
-        txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3), txDev:getTxQueue(4)},
-        -- different receiving queue, for timestamping filter
-        rxQueues = {rxDev:getRxQueue(2)},
-        duration = duration,
-        skipConf = dskip,
-        dut = dut,
-    })
-
-    file = io.open(folderName .. "/latency.csv", "w")
-    log(file, latBench:getCSVHeader(), true)
-    for _, frameSize in ipairs(FRAME_SIZES) do
-        local result = latBench:bench(frameSize, math.ceil(rates[frameSize] * (frameSize + 20) * 8))
-
-        -- save and report results
-        table.insert(results, result)
-        log(file, latBench:resultToCSV(result), true)
-        report:addLatency(result, duration)
-    end
-    latBench:toTikz(folderName .. "/plot_latency", unpack(results))
-    file:close()
-
+--    results = {}
+--    latBench = latency.benchmark()
+--    latBench:init({
+--        --txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3), txDev:getTxQueue(4)},
+--        txQueues = {txDev:getTxQueue(1), txDev:getTxQueue(2), txDev:getTxQueue(3)},
+--        -- different receiving queue, for timestamping filter
+--        rxQueues = {rxDev:getRxQueue(2)},
+--        duration = duration,
+--        skipConf = dskip,
+--        dut = dut,
+--    })
+--
+--    file = io.open(folderName .. "/latency.csv", "w")
+--    log(file, latBench:getCSVHeader(), true)
+--    for _, frameSize in ipairs(FRAME_SIZES) do
+--        local result = latBench:bench(frameSize, math.ceil(rates[frameSize] * (frameSize + 20) * 8))
+--
+--        -- save and report results
+--        table.insert(results, result)
+--        log(file, latBench:resultToCSV(result), true)
+--        report:addLatency(result, duration)
+--    end
+--    latBench:toTikz(folderName .. "/plot_latency", unpack(results))
+--    file:close()
+--
     results = {}
     local flBench = frameloss.benchmark()
     flBench:init({

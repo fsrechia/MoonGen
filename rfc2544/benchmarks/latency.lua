@@ -136,6 +136,7 @@ function benchmark:bench(frameSize, rate)
 
     -- workaround for rate bug
     local numQueues = rate > (64 * 64) / (84 * 84) * maxLinkRate and rate < maxLinkRate and 3 or 1
+    numQueues = 1
     bar:reinit(numQueues + 1)
     if rate < maxLinkRate then
         -- not maxLinkRate
